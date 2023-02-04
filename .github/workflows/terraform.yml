@@ -1,0 +1,67 @@
+name: Deploy AWS Infrastructure
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+      working-directory:
+        required: false
+        type: string
+        default: .infra-repo
+      environment:
+        required: true
+        type: string
+        default: development
+      region:
+        required: false
+        type: string
+        default: sa-east-1
+    secrets:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
+       
+jobs:
+  terraform:
+    name: IaC
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform 
+        uses: hashicorp/setup-terraform@v2
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Workspace
+        run: |
+          if [ ${{ inputs.environment }} = production ]; then 
+          terraform workspace new prd | terraform workspace select prd
+          else terraform workspace new dev | terraform workspace select dev
+          fi
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color 
+      
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: false
+      
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -no-color -auto-approve
