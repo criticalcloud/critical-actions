@@ -48,7 +48,7 @@ jobs:
 
       - name: Terraform Workspace
         run: |
-          if [ ${{ inputs.environment }} = production ]; then 
+          if [ ${{ inputs.environment }} = prd ]; then 
           terraform workspace new prd
           terraform workspace select prd
           else 
