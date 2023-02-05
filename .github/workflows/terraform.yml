@@ -27,6 +27,7 @@ on:
        
 jobs:
   terraform:
+    environment: ${{ inputs.environment }}
     name: IaC
     runs-on: ${{ inputs.runs-on }}
     env:
