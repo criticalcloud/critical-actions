@@ -19,6 +19,10 @@ on:
         required: false
         type: string
         default: sa-east-1
+      dev-backend:
+        required: false
+        type: string
+        default: ""
     secrets:
       aws-access-key-id:
         required: true
@@ -42,10 +46,15 @@ jobs:
 
       - name: Setup Terraform 
         uses: hashicorp/setup-terraform@v2
-      
+
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: |
+          if [ ${{ inputs.environment }} = prd ] || [ -z ${{ inputs.dev-backend }} ]; then 
+          terraform init
+          else 
+          terraform init -backend-config=bucket=${{ inputs.dev-backend }}
+          fi
 
       - name: Terraform Workspace
         run: |
