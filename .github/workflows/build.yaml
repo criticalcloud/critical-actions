@@ -25,6 +25,11 @@ on:
       role:
         required: true
         type: string
+    secrets:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
     outputs:
       image-tag:
         description: "Docker tag image"
@@ -37,6 +42,9 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     outputs:
       image-tag: ${{ steps.image-tag.outputs.image-tag }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -52,8 +60,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ inputs.region }}
           role-to-assume: arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}
           role-duration-seconds: 1200
