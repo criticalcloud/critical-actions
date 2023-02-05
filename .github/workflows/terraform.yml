@@ -14,19 +14,19 @@ on:
       environment:
         required: true
         type: string
-        default: development
+        default: dev
       region:
         required: false
         type: string
         default: sa-east-1
       role:
-        required: false
+        required: true
         type: string
       bucket:
-        required: false
+        required: true
         type: string
       app:
-        required: false
+        required: true
         type: string
       aws-account:
         required: true
