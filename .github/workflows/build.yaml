@@ -72,7 +72,7 @@ jobs:
       
       - name: Build Image
         run: |
-          docker image build -t ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} --build-arg RUN_ENVIRONMENT=${{ inputs.run-environment }} --build-arg VAULT_TOKEN=${{ secrets.VAULT_TOKEN }} --build-arg AWS_ACCOUNT=${{ inputs.aws-account }} .
+          docker image build -t ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} --build-arg RUN_ENVIRONMENT=${{ inputs.run-environment }} --build-arg VAULT_TOKEN=${{ secrets.VAULT_TOKEN }} --build-arg AWS_ACCOUNT=${{ inputs.aws-account }} --build-arg REGION=${{ inputs.region }} .
           docker image tag ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:latest
       
       - name: Push to ECR
