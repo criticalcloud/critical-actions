@@ -22,6 +22,9 @@ on:
       aws-account:
         required: true
         type: string
+      role:
+        required: true
+        type: string
     outputs:
       image-tag:
         description: "Docker tag image"
@@ -57,7 +60,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ inputs.region }}
-          role-to-assume: arn:aws:iam::${{ inputs.aws-account }}:role/terraform-github-actions
+          role-to-assume: arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}
           role-duration-seconds: 1200
       
       - name: ECR Login

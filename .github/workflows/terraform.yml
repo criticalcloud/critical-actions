@@ -19,6 +19,18 @@ on:
         required: false
         type: string
         default: sa-east-1
+      role:
+        required: false
+        type: string
+      bucket:
+        required: false
+        type: string
+      app:
+        required: false
+        type: string
+      aws-account:
+        required: true
+        type: string
     secrets:
       aws-access-key-id:
         required: true
@@ -45,7 +57,12 @@ jobs:
       
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: |
+          terraform init \
+          -backend-config="bucket=${{ inputs.bucket }}" \
+          -backend-config="key=infra/${{ inputs.app }}/terraform.tfstate" \
+          -backend-config="region=${{ inputs.region }}" \
+          -backend-config="role_arn=arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}"
 
       - name: Terraform Workspace
         run: |
