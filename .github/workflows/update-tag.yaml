@@ -31,11 +31,16 @@ on:
         required: false
         type: string
         default: 'image.tag'
+    secrets:
+      gh_pat:
+        required: true
 
 jobs:
   update-tag:
     name: Update
     runs-on: ${{ inputs.runs-on }}
+    env:
+      GH_PAT: ${{ secrets.gh_pat }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -45,7 +50,7 @@ jobs:
         with:
           repository: ${{ inputs.org }}/${{ inputs.repo }}
           path: infra
-          token: ${{ secrets.GH_PAT }} 
+          token: ${{ env.GH_PAT }}
 
       - name: Update Image Version in HelmChart values.yaml
         uses: fjogeleit/yaml-update-action@main
@@ -56,5 +61,5 @@ jobs:
           repository: ${{ inputs.org }}/${{ inputs.repo }}
           branch: main
           message: 'Update Image Version to ${{ inputs.image-tag }}'
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ env.GH_PAT }}
           workDir: infra
