@@ -30,6 +30,12 @@ on:
         required: true
       aws-secret-access-key:
         required: true
+      vault_token:
+        required: true
+      maven_aws_access_key:
+        required: true
+      maven_aws_secret_access_key:
+        required: true
     outputs:
       image-tag:
         description: "Docker tag image"
@@ -45,6 +51,9 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
+      VAULT_TOKEN: ${{ secrets.vault_token }}
+      MAVEN_AWS_ACCESS_KEY: ${{ secrets.maven_aws_access_key }}
+      MAVEN_AWS_SECRET_ACCESS_KEY: ${{ secrets.maven_aws_secret_access_key }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -72,7 +81,7 @@ jobs:
       
       - name: Build Image
         run: |
-          docker image build -t ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} --build-arg RUN_ENVIRONMENT=${{ inputs.run-environment }} --build-arg VAULT_TOKEN=${{ secrets.VAULT_TOKEN }} --build-arg AWS_ACCOUNT=${{ inputs.aws-account }} --build-arg REGION=${{ inputs.region }} --build-arg AWS_ACCESS_KEY=${{ secrets.MAVEN_AWS_ACCESS_KEY }} --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.MAVEN_AWS_SECRET_ACCESS_KEY }} .
+          docker image build -t ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} --build-arg RUN_ENVIRONMENT=${{ inputs.run-environment }} --build-arg VAULT_TOKEN=${{ env.VAULT_TOKEN }} --build-arg AWS_ACCOUNT=${{ inputs.aws-account }} --build-arg REGION=${{ inputs.region }} --build-arg AWS_ACCESS_KEY=${{ env.MAVEN_AWS_ACCESS_KEY }} --build-arg AWS_SECRET_ACCESS_KEY=${{ env.MAVEN_AWS_SECRET_ACCESS_KEY }} .
           docker image tag ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:latest
       
       - name: Push to ECR
