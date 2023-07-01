@@ -69,13 +69,13 @@ jobs:
           if [ ${{ inputs.environment }} = prd ]; then 
           terraform workspace select prd || terraform workspace new prd
           terraform workspace select prd
-          if else [ ${{ inputs.environment }} = prod ]; then
+          elif [ ${{ inputs.environment }} = prod ]; then
           terraform workspace select prod || terraform workspace new prod
           terraform workspace select prod
-          if else [ ${{ inputs.environment }} = hom ]; then
+          elif [ ${{ inputs.environment }} = hom ]; then
           terraform workspace select hom || terraform workspace new hom
           terraform workspace select hom
-          if else [ ${{ inputs.environment }} = dev ]; then
+          elif [ ${{ inputs.environment }} = dev ]; then
           terraform workspace select dev || terraform workspace new dev
           terraform workspace select dev
           else
