@@ -1,0 +1,68 @@
+name: Publish Python Packages
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+      python-version:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      bucket:
+        required: true
+        type: string
+      aws-account:
+        required: true
+        type: string
+      role:
+        required: true
+        type: string
+    secrets:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Build package
+        run: |
+          python3 setup.py sdist
+
+      - name: Install s3pypi
+        run: |
+          pip install -U s3pypi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+          role-to-assume: arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}
+          role-duration-seconds: 1200
+
+      - name: Publish to s3
+        run: |
+          s3pypi dist/* --bucket ${{ inputs.bucket }}
+      
