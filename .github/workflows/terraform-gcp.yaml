@@ -1,0 +1,91 @@
+name: Deploy GCP Infrastructure
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+      working-directory:
+        required: false
+        type: string
+        default: .infra-repo
+      environment:
+        required: true
+        type: string
+      region:
+        required: false
+        type: string
+        default: us-central1
+      sa:
+        required: false
+        type: string
+      bucket:
+        required: true
+        type: string
+      app:
+        required: true
+        type: string
+      project:
+        required: false
+        type: string
+    secrets:
+      google-credentials:
+        required: true
+       
+jobs:
+  terraform:
+    environment: ${{ inputs.environment }}
+    name: IaC
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.google-credentials }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform 
+        uses: hashicorp/setup-terraform@v2
+      
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init \
+          -backend-config="bucket=${{ inputs.bucket }}" \
+          -backend-config="prefix=infra/${{ inputs.app }}/terraform.tfstate"
+
+      - name: Terraform Workspace
+        run: |
+          if [ ${{ inputs.environment }} = prd ]; then 
+          terraform workspace select prd || terraform workspace new prd
+          terraform workspace select prd
+          elif [ ${{ inputs.environment }} = prod ]; then
+          terraform workspace select prod || terraform workspace new prod
+          terraform workspace select prod
+          elif [ ${{ inputs.environment }} = hom ]; then
+          terraform workspace select hom || terraform workspace new hom
+          terraform workspace select hom
+          elif [ ${{ inputs.environment }} = dev ]; then
+          terraform workspace select dev || terraform workspace new dev
+          terraform workspace select dev
+          else
+            echo "Workspace invalido!"
+            exit 1
+          fi
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color 
+      
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: false
+      
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -no-color -auto-approve
