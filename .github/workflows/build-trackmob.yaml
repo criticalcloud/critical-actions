@@ -1,0 +1,85 @@
+name: Docker Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Set environment'
+        required: true
+        type: string
+      run-environment: 
+        description: 'Build environment'
+        required: true
+        type: string
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+      region:
+        required: false
+        type: string
+        default: us-central1
+      project:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+      app:
+        required: true
+        type: string
+    secrets:
+      google-credentials:
+        required: true
+      gh-cicd-private-ssh-key:
+        required: false
+      nuget-auth-token:
+        required: false
+    outputs:
+      image-tag:
+        description: "Docker tag image"
+        value: ${{ jobs.build-image.outputs.image-tag }}
+
+jobs:
+  build-image:
+    environment: ${{ inputs.environment }}
+    name: Build
+    runs-on: ${{ inputs.runs-on }}
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.image-tag }}
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.google-credentials }}
+      GH_CICD_PRIVATE_SSH_KEY: ${{ secrets.gh-cicd-private-ssh-key }}
+      NUGET_AUTH_TOKEN: ${{ secrets.nuget-auth-token}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3   
+
+      - name: Set environment for branch
+        run: |
+          echo "LABEL=${{ inputs.environment }}-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "DEFAULT_LABEL=${{ inputs.environment }}-latest" >> "$GITHUB_ENV"
+          echo "ENVIRONMENT=${{ inputs.run-environment }}" >> "$GITHUB_ENV"
+          echo "PROJECT_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print tolower($2)}')" >> "$GITHUB_ENV"
+          source $GITHUB_ENV
+          echo "::set-output name=image-tag::$LABEL"
+        id: image-tag
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ env.GOOGLE_CREDENTIALS }}'
+
+      - name: GCR Login
+        run: |
+          gcloud auth configure-docker ${{ inputs.region }}-docker.pkg.dev
+
+      - name: Build Image
+        run: |      
+          docker build -f Track.Frontend.Server/Dockerfile . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}"
+          
+      - name: Push to GCR
+        run: |     
+          docker push ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL}
+          docker push ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL}
