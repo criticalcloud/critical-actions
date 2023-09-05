@@ -81,9 +81,9 @@ jobs:
       - name: Build Image
         run: |
           if [ -z "${{ inputs.build-path }}" ]; then
-            docker build . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}"
+            docker build . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }} --build-arg DOCKER_ENV="${ENVIRONMENT}"
           else
-            docker build -f ${{ inputs.build-path }} . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}"
+            docker build -f ${{ inputs.build-path }} . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }} --build-arg DOCKER_ENV="${ENVIRONMENT}"
           fi      
           
       - name: Push to GCR
