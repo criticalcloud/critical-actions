@@ -28,6 +28,9 @@ on:
       app:
         required: true
         type: string
+      build-path:
+        required: false
+        type: string
     secrets:
       google-credentials:
         required: true
@@ -76,8 +79,12 @@ jobs:
           gcloud auth configure-docker ${{ inputs.region }}-docker.pkg.dev
 
       - name: Build Image
-        run: |      
-          docker build -f Track.Frontend.Server/Dockerfile . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}"
+        run: |
+          if [ -z "${{ inputs.build-path }}" ]; then
+            docker build . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}"
+          else
+            docker build -f ${{ inputs.build-path }} . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}"
+          fi      
           
       - name: Push to GCR
         run: |     
