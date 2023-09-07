@@ -31,6 +31,11 @@ on:
         required: false
         type: string
         default: 'image.tag'
+      branch:
+        description: 'GitHub Chart Branch'
+        required: false
+        type: string
+        default: main
     secrets:
       gh_pat:
         required: true
@@ -59,7 +64,7 @@ jobs:
           propertyPath: ${{ inputs.property-path }}
           value: ${{ inputs.image-tag }}
           repository: ${{ inputs.org }}/${{ inputs.repo }}
-          branch: main
+          branch: ${{ inputs.branch }}
           message: 'Update Image Version to ${{ inputs.image-tag }}'
           token: ${{ env.GH_PAT }}
           workDir: infra
