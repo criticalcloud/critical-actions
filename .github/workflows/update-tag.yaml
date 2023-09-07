@@ -56,6 +56,7 @@ jobs:
           repository: ${{ inputs.org }}/${{ inputs.repo }}
           path: infra
           token: ${{ env.GH_PAT }}
+          ref: ${{ inputs.branch }}
 
       - name: Update Image Version in HelmChart values.yaml
         uses: fjogeleit/yaml-update-action@main
