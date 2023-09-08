@@ -40,6 +40,8 @@ on:
         required: false
       rails-master-key:
         required: false
+      vault_token:
+        required: false
     outputs:
       image-tag:
         description: "Docker tag image"
@@ -57,6 +59,7 @@ jobs:
       GH_CICD_PRIVATE_SSH_KEY: ${{ secrets.gh-cicd-private-ssh-key }}
       NUGET_AUTH_TOKEN: ${{ secrets.nuget-auth-token }}
       RAILS_MASTER_KEY: ${{ secrets.rails-master-key }}
+      VAULT_TOKEN: ${{ secrets.vault_token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3   
@@ -84,9 +87,9 @@ jobs:
       - name: Build Image
         run: |
           if [ -z "${{ inputs.build-path }}" ]; then
-            docker build . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}" --build-arg DOCKER_ENV="${ENVIRONMENT}" --build-arg RAILS_MASTER_KEY="${{ env.RAILS_MASTER_KEY }}"
+            docker build . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}" --build-arg DOCKER_ENV="${ENVIRONMENT}" --build-arg RAILS_MASTER_KEY="${{ env.RAILS_MASTER_KEY }} --build-arg VAULT_TOKEN=${{ env.VAULT_TOKEN }}"
           else
-            docker build -f ${{ inputs.build-path }} . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}" --build-arg DOCKER_ENV="${ENVIRONMENT}" --build-arg RAILS_MASTER_KEY="${{ env.RAILS_MASTER_KEY }}"
+            docker build -f ${{ inputs.build-path }} . -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${DEFAULT_LABEL} -t ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project }}/${{ inputs.repository }}/${{ inputs.app }}:${LABEL} --build-arg PRIVATE_SSH_KEY="${{ env.GH_CICD_PRIVATE_SSH_KEY }}" --build-arg NUGET_AUTH_TOKEN="${{ env.NUGET_AUTH_TOKEN }}" --build-arg DOCKER_ENV="${ENVIRONMENT}" --build-arg RAILS_MASTER_KEY="${{ env.RAILS_MASTER_KEY }} --build-arg VAULT_TOKEN=${{ env.VAULT_TOKEN }}"
           fi      
           
       - name: Push to GCR
