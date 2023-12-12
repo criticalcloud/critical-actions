@@ -36,8 +36,18 @@ on:
         required: false
         type: string
         default: main
+      commit-branch:
+        description: 'GitHub Chart Commit Branch'
+        required: false
+        type: string
+        default: main
       target-branch:
         description: 'GitHub Chart Target Branch'
+        required: false
+        type: string
+        default: main
+      master-branch:
+        description: 'GitHub Chart Master Branch'
         required: false
         type: string
         default: main
@@ -74,10 +84,10 @@ jobs:
           propertyPath: ${{ inputs.property-path }}
           value: ${{ inputs.image-tag }}
           repository: ${{ inputs.org }}/${{ inputs.repo }}
-          branch: ${{ inputs.branch }}
+          branch: ${{ inputs.commit-branch }}
           message: 'Update Image Version to ${{ inputs.image-tag }}'
           token: ${{ env.GH_PAT }}
           workDir: infra
           targetBranch: ${{ inputs.target-branch }}
           createPR: ${{ inputs.create-pr }}
-          masterBranchName: main
+          masterBranchName: ${{ inputs.master-branch }}
