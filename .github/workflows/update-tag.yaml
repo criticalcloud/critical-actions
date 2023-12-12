@@ -36,6 +36,10 @@ on:
         required: false
         type: string
         default: main
+      create-pr:
+        required: false
+        type: boolean
+        default: false
     secrets:
       gh_pat:
         required: true
@@ -69,3 +73,5 @@ jobs:
           message: 'Update Image Version to ${{ inputs.image-tag }}'
           token: ${{ env.GH_PAT }}
           workDir: infra
+          targetBranch: ${{ inputs.branch }}
+          createPR: ${{ inputs.create-pr }}
