@@ -79,8 +79,9 @@ jobs:
           terraform workspace select dev || terraform workspace new dev
           terraform workspace select dev
           else
-            echo "Workspace invalido!"
-            exit 1
+            terraform workspace select ${{ inputs.environment }} || terraform workspace new ${{ inputs.environment }}
+            terraform workspace select ${{ inputs.environment }}
+            echo "Workspace fora do padrão, porém executando com ele"
           fi
       
       - name: Terraform Validate
