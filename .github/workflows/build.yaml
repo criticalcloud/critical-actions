@@ -66,10 +66,10 @@ jobs:
 
       - name: Set Tag  
         run: |
-          echo "image_tag=${{ inputs.environment }}-$(git log | head -n 1 | cut -c8-15)" >> $GITHUB_ENV
+          echo "image_tag=${{ inputs.environment }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           source $GITHUB_ENV
           echo "Image Tag: $image_tag"
-          echo "::set-output name=image-tag::$image_tag"
+          echo "image-tag=$image_tag" >> $GITHUB_OUTPUT
         id: image-tag
       
       - name: Configure AWS Credentials
