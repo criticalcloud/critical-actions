@@ -42,9 +42,6 @@ jobs:
     environment: ${{ inputs.environment }}
     name: IaC
     runs-on: ${{ inputs.runs-on }}
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -54,6 +51,13 @@ jobs:
 
       - name: Setup Terraform 
         uses: hashicorp/setup-terraform@v2
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}
+          role-session-name: actionsrolesession
+          aws-region: ${{ inputs.region }} 
       
       - name: Terraform Init
         id: init
@@ -61,8 +65,7 @@ jobs:
           terraform init \
           -backend-config="bucket=${{ inputs.bucket }}" \
           -backend-config="key=infra/${{ inputs.app }}/terraform.tfstate" \
-          -backend-config="region=${{ inputs.region }}" \
-          -backend-config="role_arn=arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}"
+          -backend-config="region=${{ inputs.region }}"
 
       - name: Terraform Workspace
         run: |
