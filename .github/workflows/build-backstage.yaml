@@ -1,0 +1,129 @@
+name: Docker Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Set environment'
+        required: true
+        type: string
+      run-environment: 
+        description: 'Build environment'
+        required: true
+        type: string
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+      region:
+        required: false
+        type: string
+        default: sa-east-1
+      aws-account:
+        required: true
+        type: string
+      role:
+        required: true
+        type: string
+      dockerfile:
+        required: false
+        type: string
+      build-path:
+        required: false
+        type: string
+        default: .
+    secrets:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
+      vault_token:
+        required: true
+      maven_aws_access_key:
+        required: true
+      maven_aws_secret_access_key:
+        required: true
+      gh_user:
+        required: true
+      gh_personal_token:
+        required: true
+    outputs:
+      image-tag:
+        description: "Docker tag image"
+        value: ${{ jobs.build-image.outputs.image-tag }}
+
+jobs:
+  build-image:
+    environment: ${{ inputs.environment }}
+    name: Build
+    runs-on: ${{ inputs.runs-on }}
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.image-tag }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
+      VAULT_TOKEN: ${{ secrets.vault_token }}
+      MAVEN_AWS_ACCESS_KEY: ${{ secrets.maven_aws_access_key }}
+      MAVEN_AWS_SECRET_ACCESS_KEY: ${{ secrets.maven_aws_secret_access_key }}
+      GH_USER: ${{ secrets.gh_user }}
+      GH_PERSONAL_TOKEN: ${{ secrets.gh_personal_token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set Tag  
+        run: |
+          echo "image_tag=${{ inputs.environment }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          source $GITHUB_ENV
+          echo "Image Tag: $image_tag"
+          echo "image-tag=$image_tag" >> $GITHUB_OUTPUT
+        id: image-tag
+      
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ inputs.aws-account }}:role/${{ inputs.role }}
+          role-session-name: actionsrolesession
+          aws-region: ${{ inputs.region }}
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: install dependency
+        run: |
+          cd backstage && npm install --global yarn
+      - name: yarn install
+        run: |
+          cd backstage && yarn install --frozen-lockfile
+      - name: yarn tsc
+        run: |
+          cd backstage && yarn tsc
+      - name: yarn build-backend
+        run: |
+          cd backstage && yarn build:backend --config ../../app-config.yaml
+
+      - name: ECR Login
+        run: |
+          aws ecr get-login-password --region ${{ inputs.region }} | docker login --username AWS --password-stdin ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com
+      
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build Image
+        run: |
+          if [ -z "${{ inputs.dockerfile }}" ]; then
+            DOCKER_BUILDKIT=1 docker image build -t ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} --build-arg ENVTAG=${{ inputs.environment }} --build-arg RUN_ENVIRONMENT=${{ inputs.run-environment }} --build-arg VAULT_TOKEN=${{ env.VAULT_TOKEN }} --build-arg AWS_ACCOUNT=${{ inputs.aws-account }} --build-arg REGION=${{ inputs.region }} --build-arg AWS_ACCESS_KEY=${{ env.MAVEN_AWS_ACCESS_KEY }} --build-arg AWS_SECRET_ACCESS_KEY=${{ env.MAVEN_AWS_SECRET_ACCESS_KEY }} --build-arg GH_USER=${{ env.GH_USER }} --build-arg GH_PERSONAL_TOKEN=${{ env.GH_PERSONAL_TOKEN }} ${{ inputs.build-path }}
+          else
+            DOCKER_BUILDKIT=1 docker image build -f ${{ inputs.dockerfile }} -t ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} --build-arg GITHUB_TOKEN=${{ secrets.GH_PAT }} --build-arg ENVTAG=${{ inputs.environment }} --build-arg RUN_ENVIRONMENT=${{ inputs.run-environment }} --build-arg VAULT_TOKEN=${{ env.VAULT_TOKEN }} --build-arg AWS_ACCOUNT=${{ inputs.aws-account }} --build-arg REGION=${{ inputs.region }} --build-arg AWS_ACCESS_KEY=${{ env.MAVEN_AWS_ACCESS_KEY }} --build-arg AWS_SECRET_ACCESS_KEY=${{ env.MAVEN_AWS_SECRET_ACCESS_KEY }} --build-arg GH_USER=${{ env.GH_USER }} --build-arg GH_PERSONAL_TOKEN=${{ env.GH_PERSONAL_TOKEN }} ${{ inputs.build-path }}
+          docker image tag ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }} ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:latest
+      
+      - name: Push to ECR
+        run: |
+          docker image push ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:${{ env.image_tag }}
+          docker image push ${{ inputs.aws-account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ github.repository }}:latest
