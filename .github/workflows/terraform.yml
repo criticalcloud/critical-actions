@@ -31,11 +31,6 @@ on:
       aws-account:
         required: true
         type: string
-    secrets:
-      aws-access-key-id:
-        required: true
-      aws-secret-access-key:
-        required: true
        
 jobs:
   terraform:
