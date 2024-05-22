@@ -77,7 +77,7 @@ jobs:
           yarn tsc
       - name: yarn build-backend
         run: |
-          yarn build:backend --config ../../app-config.yaml --config ../../app-config.production.yaml
+          yarn build:backend --config ../../app-config.production.yaml
 
       - name: ECR Login
         run: |
