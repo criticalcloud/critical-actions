@@ -34,19 +34,19 @@ on:
         default: .
     secrets:
       aws-access-key-id:
-        required: true
+        required: false
       aws-secret-access-key:
-        required: true
+        required: false
       vault_token:
-        required: true
+        required: false
       maven_aws_access_key:
-        required: true
+        required: false
       maven_aws_secret_access_key:
-        required: true
+        required: false
       gh_user:
-        required: true
+        required: false
       gh_personal_token:
-        required: true
+        required: false
     outputs:
       image-tag:
         description: "Docker tag image"
