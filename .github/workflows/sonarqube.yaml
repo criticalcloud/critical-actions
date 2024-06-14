@@ -12,9 +12,9 @@ on:
         type: string
         default: ubuntu-latest
     secrets:
-      sonar_token:
+      sonar-token:
         required: true
-      sonar_host_url:
+      sonar-host-url:
         required: true
 
 jobs:
@@ -22,8 +22,8 @@ jobs:
     name: Scan
     runs-on: ${{ inputs.runs-on }}
     env:
-      SONAR_TOKEN: ${{ secrets.sonar_token }}
-      SONAR_HOST_URL: ${{ secrets.sonar_host_url }}
+      SONAR_TOKEN: ${{ secrets.sonar-token }}
+      SONAR_HOST_URL: ${{ secrets.sonar-host-url }}
     steps:
     - name: Checkout 
       uses: actions/checkout@v4
